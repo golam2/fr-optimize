@@ -35,7 +35,9 @@ y_o_inv = 1 ./ y_o;
 % -----------------------------------
 % COMBINE FILTER AND AUDIOGRAM FREQUENCY RESPONSE
 % Note: currently, phase shift is not taken into consideration in the calculation
-% for this application, destruction caused by phase shift has not yet been an issue
+% for this application, destruction caused by phase shift has not yet been
+% an issue likely since the mid-frequency response has phase offset close
+% to 0.
 % -----------------------------------
 
 % optimal frequency response function in dB
@@ -54,7 +56,10 @@ fun_bp = @(p, C) p(4) * mfb_bandpass(p(1), p(2), p(3), C, x_i);
 % define the anonymous function for optimization function
 % Note: this combines frequency responses without considering phase shift, which should not be an issue
 % this line will use the gram file as the audiogram source
-fun = @(prm) (y - 20 * log10( (prm(1) * (y_o_inv) .* (prm(2) + fun_bp(prm(3:6), C1) + fun_bp(prm(7:10), C2))))); % .* weight_y;
+
+% fun = @(prm) (y - 20 * log10( (prm(1) * (y_o_inv) .* (prm(2) + fun_bp(prm(3:6), C1) + fun_bp(prm(7:10), C2))))); % .* weight_y;
+
+fun = @(prm) (y - 20 * log10( abs(prm(1) * (y_o_inv) .* (prm(2) + fun_bp(prm(3:6), C1) + fun_bp(prm(7:10), C2))) )); % .* weight_y;
 % this line will use a defined filter function as the audiogram source
 % fun = @(prm) (y - 20 * log10( (prm(1) * (brickwall) .* (prm(2) + fun_bp(prm(3:6), C1) + fun_bp(prm(7:10), C2))))) .* weight_y;
 
@@ -82,18 +87,18 @@ x = lsqnonlin(fun, x0, lb, ub)
 % PLOT RESULTS
 % ----------------
 % subplot(2,1,1)
-semilogx(x_i, 20 * log10(y_o_inv));  % the original audiogram
+semilogx(x_i, 20 * log10( abs(y_o_inv) ));  % the original audiogram
 hold on
 % plot(x_i, x(4) * mfb_bandpass(x(1), x(2), x(3), C, x_i))
 
 % plot filter output only
-semilogx(x_i, 20 * log10(x(1) * ((x(2) + fun_bp(x(3:6), C1) + fun_bp(x(7:10), C2)))))
+semilogx(x_i, 20 * log10( abs(x(1) * ((x(2) + fun_bp(x(3:6), C1) + fun_bp(x(7:10), C2)))) ))
     
 %regular plot with dB
 % plot(x_i, 20 * log10(x(1) * (y_o_inv) .* (x(2) + fun_bp(x(3:6), C1) + fun_bp(x(7:10), C2))))
 
 %log plot with dB
-semilogx(x_i, 20 * log10(x(1) * (y_o_inv) .* (x(2) + fun_bp(x(3:6), C1) + fun_bp(x(7:10), C2))))
+semilogx(x_i, 20 * log10( abs(x(1) * (y_o_inv) .* (x(2) + fun_bp(x(3:6), C1) + fun_bp(x(7:10), C2))) ))
 
 % plot(x_i, 20 * log10(x(1) * (y_o_inv) .* (x(2) + fun_bp(x(3:6), C1) + fun_bp(x(7:10), C2))))
 
@@ -102,5 +107,6 @@ xlabel('Frequency (rad/s)');
 ylabel('Gain (dB)');
 xlim([100*2*pi 10000*2*pi])
 
+% DONE: include phase change
 % TODO: create weight function for weighting speech frequencies more
 % TODO: create weight function to weight rapidly changing responses negatively
