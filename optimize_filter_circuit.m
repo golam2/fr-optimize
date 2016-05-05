@@ -1,11 +1,16 @@
+% This script attempts to optimize a circuit consisting of MFB bandpass
+% filters to compensate for human hearing loss, specified in the gram.dat   
+% file as a frequency response in terms of magnitude (dB) vs frequency (Hz). 
+% -------------------------------------------------------------------------
+
 % Filter Frequency Response calculation for Demo 
 R1 = 100000;
 R2 = 2200;
 C = 1000 * 10^-9;
 
-gain = 20 * log10(R2 / R1)
+gain = 20 * log10(R2 / R1);
 w = linspace(100 * 2 * pi, 10000 * 2 * pi, 100);
-s = (-1)^.5 * w                                     % substitute s = jw
+s = (-1)^.5 * w;                                    % substitute s = jw
 brickwall = abs(-(R2/R1) .* ( 1 ./ (R2*C*s + 1)));  % compute magnitude
 
 % -----------------------------------
@@ -76,11 +81,13 @@ x0 = cat(2, 100, 1, init, init);
 lb = cat(2, 0, zeros(1,9));
 
 % upper bound
-upper = [10000, 10000, 10000, 1];
-ub = cat(2, 100, 1, upper, upper);
+upper_bp = [10000, 10000, 10000, 1];
+ub = cat(2, 100, 1, upper_bp, upper_bp);
 
 % use MATLAB's lsqnonlin function to perform optimization
+tic
 x = lsqnonlin(fun, x0, lb, ub)
+toc
 
 
 % ----------------
@@ -107,6 +114,7 @@ xlabel('Frequency (rad/s)');
 ylabel('Gain (dB)');
 xlim([100*2*pi 10000*2*pi])
 
-% DONE: include phase change
+% DONE: include phase change - moved abs() value to the end
+% TODO: create script to tune frequency responses
 % TODO: create weight function for weighting speech frequencies more
 % TODO: create weight function to weight rapidly changing responses negatively
